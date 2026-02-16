@@ -701,6 +701,7 @@ class CommandeController extends AbstractController
         }
 
         $commande->setStatut($newStatut);
+        $commande->setStatutUpdatedAt(new \DateTimeImmutable());
 
         // ✅ Hook: passage à RETOUR_MATERIEL => date + mail
         if ($newStatut === StatutCommande::RETOUR_MATERIEL) {
@@ -727,6 +728,59 @@ class CommandeController extends AbstractController
                 $mailer->send($mail);
             }
         }
+
+        $this->manager->flush();
+
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
+
+    #[Route('/{id}/restitution-materiel', name: 'patch_restitution_materiel', methods: ['PATCH'], requirements: ['id' => '\d+'])]
+    #[Security("is_granted('ROLE_EMPLOYEE') or is_granted('ROLE_ADMIN')")]
+    #[OA\Patch(
+        path: '/api/commande/{id}/restitution-materiel',
+        summary: "Confirmer la restitution du matériel",
+        description: "Confirme la restitution du matériel pour une commande. Permet ensuite la transition vers 'terminee'.",
+        tags: ['Commande'],
+        security: [['X-AUTH-TOKEN' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer', example: 19)
+            )
+        ],
+        requestBody: new OA\RequestBody(
+            required: false,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'restitution_materiel', type: 'boolean', example: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 204, description: "Restitution confirmée"),
+            new OA\Response(response: 404, description: "Commande non trouvée"),
+            new OA\Response(response: 409, description: "Conflit de statut / restitution non applicable"),
+        ]
+    )]
+    public function patchRestitutionMateriel(int $id, Request $request): JsonResponse
+    {
+        $commande = $this->repository->find($id);
+        if (!$commande) {
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND);
+        }
+
+        // Option: n'autoriser que quand statut == retour_materiel
+        if ($commande->getStatut()?->value !== 'retour_materiel') {
+            return new JsonResponse(['message' => 'Restitution non applicable pour ce statut'], Response::HTTP_CONFLICT);
+        }
+
+        $data = json_decode($request->getContent() ?: '{}', true) ?? [];
+        $val = array_key_exists('restitution_materiel', $data) ? (bool)$data['restitution_materiel'] : true;
+
+        // à adapter selon ton champ exact:
+        $commande->setRestitutionMateriel($val);
 
         $this->manager->flush();
 
@@ -891,9 +945,17 @@ class CommandeController extends AbstractController
                                 type: 'string',
                                 nullable: true,
                                 example: 'en_attente',
-                                description: "Statut de la commande (enum backed)"
-                                // Si tu veux, tu peux ajouter enum: [...]
+                                description: "Statut de la commande (enum backed)",
+                                enum: ['en_attente','acceptee','refusee','preparation','livraison','livree','retour_materiel','annulee','terminee']
                             ),
+                            new OA\Property(
+                                property: 'statut_updated_at',
+                                type: 'string',
+                                nullable: true,
+                                example: '2026-02-16T12:49:36+01:00',
+                                description: "Date/heure du dernier changement de statut (ISO 8601)"
+                            ),
+
                             new OA\Property(
                                 property: 'menu',
                                 type: 'object',
@@ -940,7 +1002,8 @@ class CommandeController extends AbstractController
                 'heure_prestation' => $c->getHeurePrestation()?->format('H:i'),
                 'nb_personne' => $c->getNbPersonne(),
                 'prix_total' => $c->getPrixTotal(),
-                'statut' => $c->getStatut()?->value ?? null, // si enum backed
+                'statut' => $c->getStatut()?->value ?? null,
+                'statut_updated_at' => $c->getStatutUpdatedAt()?->format(\DateTimeInterface::ATOM),
                 'menu' => $menu ? [
                     'id' => $menu->getId(),
                     'titre' => $menu->getTitre(),

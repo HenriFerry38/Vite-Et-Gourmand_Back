@@ -42,9 +42,9 @@ security:
         - { path: ^/api/menu/all, roles: PUBLIC_ACCESS}
         - { path: ^/api/menu/\d+$, roles: PUBLIC_ACCESS }
 
-        - { path: ^/api/commande/\d+/statut$, roles: ROLE_EMPLOYE }
-        - { path: ^/api/avis/\d+/accepter$, roles: ROLE_EMPLOYE }
-        - { path: ^/api/avis/\d+/refuser$, roles: ROLE_EMPLOYE }
+        - { path: ^/api/commande/\d+/statut$, roles: ROLE_EMPLOYEE }
+        - { path: ^/api/avis/\d+/accepter$, roles: ROLE_EMPLOYEE }
+        - { path: ^/api/avis/\d+/refuser$, roles: ROLE_EMPLOYEE }
         
         - { path: ^/api, roles: ROLE_USER}
 when@test:

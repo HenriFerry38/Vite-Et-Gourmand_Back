@@ -163,4 +163,13 @@ class Plat
         return $this;
     }
 
+    /**
+     * @return Collection<int, Menu>
+     */
+    public function getMenus(): Collection
+    {
+        return $this->menus;
+    }
+
 }
+

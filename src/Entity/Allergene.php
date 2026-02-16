@@ -16,11 +16,11 @@ class Allergene
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['plat:read', 'menu:detail'])]
+    #[Groups(['allergene:read','plat:read', 'menu:detail'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
-    #[Groups(['plat:read', 'menu:detail','menu:read'])]
+    #[Groups(['allergene:read','plat:read', 'menu:detail','menu:read'])]
     private ?string $libelle = null;
 
     #[ORM\Column(type: 'datetime_immutable', options: ['default'=> 'CURRENT_TIMESTAMP'])]

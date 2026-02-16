@@ -95,6 +95,9 @@ class Commande
     #[Groups(['commande:read'])]
     private ?\DateTimeImmutable $retour_materiel_at = null;
 
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $statutUpdatedAt = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -313,6 +316,17 @@ class Commande
     public function setRetourMaterielAt(?\DateTimeImmutable $retour_materiel_at): static
     {
         $this->retour_materiel_at = $retour_materiel_at;
+        return $this;
+    }
+
+    public function getStatutUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->statutUpdatedAt;
+    }
+
+    public function setStatutUpdatedAt(?\DateTimeImmutable $dt): static
+    {
+        $this->statutUpdatedAt = $dt;
         return $this;
     }
 }

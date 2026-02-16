@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 use App\Repository\PlatRepository;
+use App\Repository\AllergeneRepository;
 use App\Entity\Plat;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,6 +23,7 @@ class PlatController extends AbstractController
     public function __construct(
         private EntityManagerInterface $manager,
         private PlatRepository $repository,
+        private AllergeneRepository $allergeneRepo,
         private SerializerInterface $serializer,
         private UrlGeneratorInterface $urlGenerator
         )
@@ -83,7 +85,7 @@ class PlatController extends AbstractController
     }
     
 
-    #[Route('/{id}', name: 'show', methods: ['GET'])]
+    #[Route('/{id}', name: 'show', methods: ['GET'], requirements: ['id' => '\d+'])]
     #[OA\Get(
         path: '/api/plat/{id}',
         summary: "Afficher un plat par ID",
@@ -143,7 +145,8 @@ class PlatController extends AbstractController
         return new JsonResponse( null, Response::HTTP_NOT_FOUND);
     } 
 
-    #[Route('/{id}', name: 'edit', methods: ['PUT'])]
+    #[Route('/{id}', name: 'edit', methods: ['PUT'],requirements: ['menuId' => '\d+', 'platId' => '\d+'])]
+    #[Security("is_granted('ROLE_EMPLOYEE') or is_granted('ROLE_ADMIN')")]
     #[OA\Put(
         path: '/api/plat/{id}',
         summary: "Modifier un plat par ID",
@@ -170,6 +173,14 @@ class PlatController extends AbstractController
                         nullable: true,
                         example: 'https://exemple.com/images/poulet-roti-xl.jpg'
                     ),
+                    new OA\Property(property: 'categorie', type: 'string', example: 'plat'),
+                    new OA\Property(
+                        property: 'allergenesIds',
+                        type: 'array',
+                        items: new OA\Items(type: 'integer', example: 1),
+                        example: [1, 3, 5],
+                        description: "Liste d’IDs d’allergènes à associer au plat (remplace la liste existante)."
+                    ),
                 ]
             )
         ),
@@ -192,12 +203,44 @@ class PlatController extends AbstractController
     {
         $plat = $this->repository->findOneBy(['id' => $id]);
         if ($plat) {
+            $raw = $request->getContent() ?: '';
+            $data = json_decode($raw, true);
+
+            if ($data === null && $raw !== '' && json_last_error() !== JSON_ERROR_NONE) {
+                return new JsonResponse(['message' => 'JSON invalide'], Response::HTTP_BAD_REQUEST);
+            }
+
             $plat = $this->serializer->deserialize(
-                $request->getContent(),
+                $raw,
                 Plat::class,
                 'json',
                 [AbstractNormalizer::OBJECT_TO_POPULATE => $plat]
             );
+
+            if (is_array($data) && array_key_exists('allergenesIds', $data)) {
+                $ids = $data['allergenesIds'];
+
+                if (!is_array($ids)) {
+                    return new JsonResponse(['message' => 'allergenesIds doit être un tableau'], Response::HTTP_BAD_REQUEST);
+                }
+
+                // reset
+                foreach ($plat->getAllergenes() as $al) {
+                    $plat->removeAllergene($al);
+                }
+
+                // add new
+                foreach ($ids as $alId) {
+                    $alId = (int) $alId;
+                    if ($alId <= 0) continue;
+
+                    $all = $this->allergeneRepo->find($alId);
+                    if ($all) {
+                        $plat->addAllergene($all);
+                    }
+                }
+            }
+
             $plat->setUpdatedAt(new DateTimeImmutable());
             $this->manager->flush();
 
@@ -208,7 +251,7 @@ class PlatController extends AbstractController
     }
 
     
-    #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
+    #[Route('/{id}', name: 'delete', methods: ['DELETE'],requirements: ['menuId' => '\d+', 'platId' => '\d+'])]
     #[Security("is_granted('ROLE_EMPLOYEE') or is_granted('ROLE_ADMIN')")]
     #[OA\Delete(
         path: '/api/plat/{id}',
@@ -239,6 +282,18 @@ class PlatController extends AbstractController
     {
         $plat = $this->repository->findOneBy(['id' => $id]);
         if ($plat) {
+            foreach ($plat->getMenus() as $menu) {
+                $menu->removePlat($plat); // faut que Menu ait removePlat()
+            }
+
+            $photo = $plat->getPhoto();
+            if ($photo) {
+                $path = $this->getParameter('kernel.project_dir') . '/public/uploads/plats/' . $photo;
+                if (is_file($path)) {
+                    @unlink($path);
+                }
+            }
+
             $this->manager->remove($plat);
             $this->manager->flush();
 
@@ -247,6 +302,7 @@ class PlatController extends AbstractController
         
         return new JsonResponse( null, Response::HTTP_NOT_FOUND);
     }
+
     #[Route('', name: 'index', methods: ['GET'])]
     #[Security("is_granted('ROLE_EMPLOYEE') or is_granted('ROLE_ADMIN')")]
     #[OA\Get(

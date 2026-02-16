@@ -97,7 +97,7 @@ class AllergeneController extends AbstractController
     } 
     
 
-    #[Route('/{id}', name: 'show', methods: ['GET'])]
+    #[Route('/{id}', name: 'show', methods: ['GET'],requirements: ['menuId' => '\d+', 'platId' => '\d+'])]
     #[OA\Get(
         path: '/api/allergene/{id}',
         summary: "Récupérer un allergène par ID",
@@ -156,7 +156,7 @@ class AllergeneController extends AbstractController
         return new JsonResponse( null, Response::HTTP_NOT_FOUND);
     } 
 
-    #[Route('/{id}', name: 'edit', methods: ['PUT'])]
+    #[Route('/{id}', name: 'edit', methods: ['PUT'],requirements: ['menuId' => '\d+', 'platId' => '\d+'])]
     #[OA\Put(
         path: '/api/allergene/{id}',
         summary: "Mettre à jour un allergène par ID",
@@ -220,7 +220,7 @@ class AllergeneController extends AbstractController
     }
 
     
-    #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
+    #[Route('/{id}', name: 'delete', methods: ['DELETE'],requirements: ['menuId' => '\d+', 'platId' => '\d+'])]
     #[OA\Delete(
         path: '/api/allergene/{id}',
         summary: "Supprimer un allergène par ID",
@@ -257,6 +257,41 @@ class AllergeneController extends AbstractController
         }
         
         return new JsonResponse( null, Response::HTTP_NOT_FOUND);
+    }
+
+    #[Route('', name: 'index', methods: ['GET'])]
+    #[Security("is_granted('ROLE_EMPLOYEE') or is_granted('ROLE_ADMIN')")]
+    #[OA\Get(
+        path: '/api/allergene',
+        summary: "Lister les allergènes",
+        description: "Retourne la liste des allergènes (réservé employé/admin).",
+        tags: ['Allergenes'],
+        security: [['X-AUTH-TOKEN' => []]],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Liste des allergènes",
+                content: new OA\JsonContent(
+                    type: 'array',
+                    items: new OA\Items(
+                        type: 'object',
+                        properties: [
+                            new OA\Property(property: 'id', type: 'integer', example: 1),
+                            new OA\Property(property: 'libelle', type: 'string', example: 'Gluten'),
+                        ]
+                    )
+                )
+            ),
+            new OA\Response(response: 401, description: "Non authentifié"),
+            new OA\Response(response: 403, description: "Accès refusé"),
+        ]
+    )]
+    public function index(): JsonResponse
+    {
+        $allergenes = $this->repository->findBy([],['id' => 'DESC']);
+
+        $json = $this->serializer->serialize($allergenes,'json', ['groups'=> ['allergene:read']]);
+        return new JsonResponse($json, Response::HTTP_OK, [], true);
     }
 }
 
