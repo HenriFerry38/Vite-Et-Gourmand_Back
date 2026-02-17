@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Controller;
+
+use App\Service\StatsWriter;
 use App\Repository\CommandeRepository;
 use App\Repository\MenuRepository;
 use App\Entity\Commande;
@@ -33,7 +35,8 @@ class CommandeController extends AbstractController
         private SerializerInterface $serializer,
         private UrlGeneratorInterface $urlGenerator,
         private MenuRepository $menuRepository,
-        private MailerInterface $mailer
+        private MailerInterface $mailer,
+        private StatsWriter $statsWriter
         )
     {
 
@@ -664,7 +667,7 @@ class CommandeController extends AbstractController
             ], Response::HTTP_CONFLICT);
         }
 
-
+        
         $current = $commande->getStatut();
 
         // transitions "par défaut"
@@ -700,8 +703,41 @@ class CommandeController extends AbstractController
             ], Response::HTTP_FORBIDDEN);
         }
 
+        $oldStatut = $commande->getStatut();
         $commande->setStatut($newStatut);
         $commande->setStatutUpdatedAt(new \DateTimeImmutable());
+
+        // LOG: on vérifie qu'on passe bien ici
+        file_put_contents(
+            $this->getParameter('kernel.project_dir') . '/var/log/stats_hook.log',
+            sprintf(
+                "[%s] cmd=%d old=%s new=%s pretMateriel=%s restitution=%s\n",
+                (new \DateTimeImmutable())->format('c'),
+                $commande->getId(),
+                $oldStatut?->value ?? 'null',
+                $newStatut->value,
+                $pretMateriel ? '1' : '0',
+                $commande->isRestitutionMateriel() ? '1' : '0'
+            ),
+            FILE_APPEND
+        );
+
+        // TEST: appelle StatsWriter SANS try/catch pour voir une vraie erreur
+        if ($newStatut === StatutCommande::TERMINEE && $oldStatut !== StatutCommande::TERMINEE) {
+            file_put_contents(
+                $this->getParameter('kernel.project_dir') . '/var/log/stats_hook.log',
+                " -> calling StatsWriter\n",
+                FILE_APPEND
+            );
+
+            $this->statsWriter->addCommandeToDailyMenuStats($commande);
+
+            file_put_contents(
+                $this->getParameter('kernel.project_dir') . '/var/log/stats_hook.log',
+                " -> StatsWriter OK\n",
+                FILE_APPEND
+            );
+        }
 
         // ✅ Hook: passage à RETOUR_MATERIEL => date + mail
         if ($newStatut === StatutCommande::RETOUR_MATERIEL) {
@@ -725,7 +761,7 @@ class CommandeController extends AbstractController
                         ."Cordialement,\nVite & Gourmand"
                     );
 
-                $mailer->send($mail);
+                $this->mailer->send($mail);
             }
         }
 

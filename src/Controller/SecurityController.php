@@ -120,6 +120,10 @@ final class SecurityController extends AbstractController
                 description: 'JSON invalide'
             ),
             new OA\Response(
+            response: 403,
+            description: 'Compte désactivé'
+            ),
+            new OA\Response(
                 response: 200,
                 description: 'Connexion réussie',
                 content: new OA\JsonContent(
@@ -151,6 +155,10 @@ final class SecurityController extends AbstractController
     {
         if (null === $user) {
             return new JsonResponse(['message' => 'Informations d\'identification manquantes'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        if (!$user->isActive()) {
+            return new JsonResponse(['message' => 'Compte désactivé'], Response::HTTP_FORBIDDEN);
         }
 
         return new JsonResponse([

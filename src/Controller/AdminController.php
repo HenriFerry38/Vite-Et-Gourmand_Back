@@ -40,7 +40,7 @@ final class AdminController extends AbstractController
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['email', 'password', 'prenom', 'nom'],
+                required: ['email', 'password'],
                 properties: [
                     new OA\Property(property: 'email', type: 'string', example: 'employe@site.fr'),
                     new OA\Property(property: 'password', type: 'string', example: 'MotDePasseTemporaire!'),
@@ -130,6 +130,7 @@ final class AdminController extends AbstractController
                 "Identifiant (email) : {$user->getEmail()}\n\n".
                 "Le mot de passe n’est pas communiqué par email.\n".
                 "Merci de vous rapprocher de l’administrateur pour l’obtenir.\n\n".
+                "Veuillez une fois le mot de passe obtenu, modifier vos informations personelles.\n\n".
                 "Bonne journée."
             );
 
@@ -141,6 +142,54 @@ final class AdminController extends AbstractController
             'message' => 'Employé créé et email envoyé',
         ], Response::HTTP_CREATED);
     }
+
+    #[Route('', name: 'list', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
+    #[OA\Get(
+        path: '/api/admin/employees',
+        summary: "Lister les comptes employé",
+        tags: ['Admin'],
+        security: [['X-AUTH-TOKEN' => []]],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Liste des employés",
+                content: new OA\JsonContent(
+                    type: 'array',
+                    items: new OA\Items(
+                        type: 'object',
+                        properties: [
+                            new OA\Property(property: 'id', type: 'integer', example: 10),
+                            new OA\Property(property: 'email', type: 'string', example: 'employe@site.fr'),
+                            new OA\Property(property: 'isActive', type: 'boolean', example: true),
+                            new OA\Property(property: 'roles', type: 'array', items: new OA\Items(type: 'string'), example: ['ROLE_EMPLOYEE']),
+                        ]
+                    )
+                )
+            )
+        ]
+    )]
+    public function list(): JsonResponse
+    {
+        // si tu as une méthode repo dédiée c’est mieux,
+        // sinon on filtre en PHP (OK pour un rendu)
+        $users = $this->userRepository->findAll();
+
+        $employees = [];
+        foreach ($users as $u) {
+            if (in_array('ROLE_EMPLOYEE', $u->getRoles(), true)) {
+                $employees[] = [
+                    'id' => $u->getId(),
+                    'email' => $u->getEmail(),
+                    'isActive' => $u->isActive(),
+                    'roles' => $u->getRoles(),
+                ];
+            }
+        }
+
+        return new JsonResponse($employees, Response::HTTP_OK);
+    }
+
 
     #[Route('/{id}/disable', name: 'disable', methods: ['PATCH'], requirements: ['id' => '\d+'])]
     #[IsGranted('ROLE_ADMIN')]
