@@ -171,8 +171,6 @@ final class AdminController extends AbstractController
     )]
     public function list(): JsonResponse
     {
-        // si tu as une méthode repo dédiée c’est mieux,
-        // sinon on filtre en PHP (OK pour un rendu)
         $users = $this->userRepository->findAll();
 
         $employees = [];

@@ -17,11 +17,11 @@ class Commande
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['commande:read'])]
+    #[Groups(['commande:read','avis:employee'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50, unique: true)]
-    #[Groups(['commande:read'])]
+    #[Groups(['commande:read','avis:employee'])]
     private ?string $numero_commande = null;
 
     #[ORM\Column(type: 'datetime_immutable', options: ['default'=> 'CURRENT_TIMESTAMP'])]
@@ -36,28 +36,29 @@ class Commande
     }
 
     #[ORM\Column(length: 150)]
+    #[Groups(['avis:employee'])]
     private ?string $adresse_prestation = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Groups(['commande:read'])]
+    #[Groups(['commande:read','avis:employee'])]
     private ?\DateTimeInterface $date_prestation = null;
 
    #[ORM\Column(type: Types::TIME_MUTABLE)]
-   #[Groups(['commande:read'])]
+   #[Groups(['commande:read','avis:employee'])]
     private ?\DateTimeInterface $heure_prestation = null;
 
     #[ORM\Column(nullable :true, type: Types::DECIMAL, precision: 5, scale: 2)]
     private ?string $prix_commande = null;
 
     #[ORM\Column]
-    #[Groups(['commande:read'])]
+    #[Groups(['commande:read','avis:employee'])]
     private ?int $nb_personne = null;
 
     #[ORM\Column(nullable: true, type: Types::DECIMAL, precision: 5, scale: 2)]
     private ?string $prix_livraison = null;
 
     #[ORM\Column(nullable :true, type: Types::DECIMAL, precision: 5, scale: 2)]
-    #[Groups(['commande:read'])]
+    #[Groups(['commande:read','avis:employee'])]
     private ?string $prix_total = null;
     
 
@@ -76,7 +77,7 @@ class Commande
 
     #[ORM\ManyToOne(inversedBy: 'commandes')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['commande:read'])]
+    #[Groups(['commande:read','avis:employee'])]
     private ?Menu $menu = null;
 
     #[ORM\Column(nullable: true, type: 'datetime_immutable')]

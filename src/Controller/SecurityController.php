@@ -16,7 +16,8 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
-
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 
 #[Route('/api', name: 'app_api_')]
 final class SecurityController extends AbstractController
@@ -25,7 +26,8 @@ final class SecurityController extends AbstractController
         private SerializerInterface $serializer,
         private EntityManagerInterface $manager,
         private UserRepository $repository,
-        private RoleRepository $roleRepository
+        private RoleRepository $roleRepository,
+        private MailerInterface $mailer
         )
     {
     }
@@ -80,6 +82,22 @@ final class SecurityController extends AbstractController
         
         $this->manager->persist($user);
         $this->manager->flush();
+        $emailTo = $user->getEmail();
+
+        if ($emailTo) {
+            $email = (new Email())
+                ->from('no-reply@viteetgourmand.fr')
+                ->to($emailTo)
+                ->subject('Bienvenue chez Vite & Gourmand 🎉')
+                ->text(
+                    "Bonjour {$user->getPrenom()},\n\n" .
+                    "Ton compte a bien été créé ✅\n" .
+                    "Tu peux maintenant réserver tes menus et suivre tes commandes.\n\n" .
+                    "À très vite,\n— Vite & Gourmand"
+                );
+
+            $this->mailer->send($email);
+        }
 
         return new JsonResponse(
             ['user' => $user->getUserIdentifier(), 'apiToken' => $user->getApiToken(), 'roles' => $user->getRoles()],

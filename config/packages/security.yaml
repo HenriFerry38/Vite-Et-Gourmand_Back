@@ -41,6 +41,7 @@ security:
         - { path: ^/api/doc, roles: PUBLIC_ACCESS }
         - { path: ^/api/menu/all, roles: PUBLIC_ACCESS}
         - { path: ^/api/menu/\d+$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/avis$, roles: PUBLIC_ACCESS, methods: [GET] }
 
         - { path: ^/api/commande/\d+/statut$, roles: ROLE_EMPLOYEE }
         - { path: ^/api/avis/\d+/accepter$, roles: ROLE_EMPLOYEE }

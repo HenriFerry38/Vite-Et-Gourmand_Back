@@ -6,6 +6,7 @@ use App\Repository\AvisRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\DBAL\Types\Types;
 use App\Enum\StatutAvis;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\HasLifecycleCallbacks]
 #[ORM\Entity(repositoryClass: AvisRepository::class)]
@@ -14,18 +15,23 @@ class Avis
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['avis:employee', 'avis:public'])]
     private ?int $id = null;
 
     #[ORM\Column]
+    #[Groups(['avis:employee', 'avis:public'])]
     private ?int $note = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['avis:employee', 'avis:public'])]
     private ?string $description = null;
 
     #[ORM\Column(enumType: StatutAvis::class)]
+    #[Groups(['avis:employee', 'avis:public'])]
     private StatutAvis $statut = StatutAvis::EN_ATTENTE;
 
     #[ORM\Column(type: 'datetime_immutable', options: ['default'=> 'CURRENT_TIMESTAMP'])]
+    #[Groups(['avis:employee', 'avis:public'])]
     private ?\DateTimeImmutable $createdAt;
 
     #[ORM\PrePersist]
@@ -38,7 +44,7 @@ class Avis
     #[ORM\Column(nullable: true,type: 'datetime_immutable', options: ['default'=> 'CURRENT_TIMESTAMP'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\PrePersist]
+    #[ORM\PreUpdate]
     public function setUpdatedAtValue():void
     {
         if (!isset($this->updatedAt)){
@@ -48,7 +54,13 @@ class Avis
 
     #[ORM\ManyToOne(inversedBy: 'avis')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[Groups(['avis:employee'])]
     private ?User $user = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[Groups(['avis:employee'])]
+    private ?Commande $commande = null;
 
     public function getId(): ?int
     {
@@ -115,7 +127,27 @@ class Avis
         return $this;
     }
 
-    public function getUser(): ?User { return $this->user; }
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
     
-    public function setUser(?User $user): self { $this->user = $user; return $this; }
+    public function setUser(?User $user): self 
+    {
+        $this->user = $user; 
+
+        return $this;
+    }
+
+    public function getCommande(): ?Commande 
+    { 
+        return $this->commande;
+    }
+
+    public function setCommande(?Commande $commande): self 
+    { 
+        $this->commande = $commande; 
+
+        return $this; 
+    }
 }

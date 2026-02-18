@@ -237,6 +237,40 @@ class CommandeController extends AbstractController
             $this->manager->persist($commande);
             $this->manager->flush();
             $this->manager->commit();
+            try {
+                $to = $user->getEmail();
+
+                if ($to) {
+                    $numero = $commande->getNumeroCommande() ?? (string) $commande->getId();
+                    $menuTitre = $menu->getTitre() ?? 'Menu';
+
+                    $datePrest = $commande->getDatePrestation()?->format('d/m/Y') ?? '—';
+                    $heurePrest = $commande->getHeurePrestation()?->format('H:i') ?? '—';
+
+                    $email = (new Email())
+                        ->from('no-reply@viteetgourmand.fr')
+                        ->to($to)
+                        ->subject("Commande enregistrée ✅ (#{$numero})")
+                        ->text(
+                            "Bonjour " . ($user->getPrenom() ?? "") . ",\n\n" .
+                            "Nous avons bien reçu votre commande ✅\n" .
+                            "Elle est actuellement en attente de validation par l’équipe.\n\n" .
+                            "Récapitulatif :\n" .
+                            "- N° commande : #{$numero}\n" .
+                            "- Menu : {$menuTitre}\n" .
+                            "- Date prestation : {$datePrest}\n" .
+                            "- Heure : {$heurePrest}\n" .
+                            "- Personnes : {$nb}\n" .
+                            "- Adresse : {$adresse_prestation}\n" .
+                            "- Total : {$prixTotal}€\n\n" .
+                            "Merci pour votre confiance,\n— Vite & Gourmand"
+                        );
+
+                    $this->mailer->send($email);
+                }
+            } catch (\Throwable $mailErr) {
+                
+            }
 
             return new JsonResponse(
                 $this->serializer->serialize($commande, 'json', [
