@@ -166,6 +166,34 @@ root étant le profil de connection de base de MySQL il vous sera amener a chang
 
 ---
 
+## ✉️ Gestion des emails
+
+Le projet utilise Symfony Mailer.
+
+Installez Mailpit au préalable cela permetra le bon fonctionnement du site.
+
+(sinon : changez la variable MAILER_DSN=smtp://localhost:1025 en MAILER_DSN=null://null)
+(cela permettra a l'application de tourner sans problème mais vous ne constaterez pas l'envoie de mail).
+
+En environnement de développement, les emails sont interceptés par Mailpit.
+
+Lancer Mailpit :
+
+- dans une fenètre PowerShell ou terminal
+
+```bash
+CD <CheminDAccesDossierMailpit> 
+.\mailpit.exe
+```
+
+Interface web disponible sur :
+
+```
+http://localhost:8025
+```
+
+---
+
 ### 7️⃣ Lancer le serveur Symfony
 
 ```bash
@@ -223,10 +251,8 @@ Les comptes suivants sont présents dans le seed :
 Dans un soucis de sécurité, j'ai volontairement affichés les mots de passe "hashés". Il est nécessaire de garder ces informations secretes.
 Cependant lors de la création d'un utilisateur son mot de passe est enregistré et ensuite hashé avant stockage en BDD.
 
-Dans le cadre de ce projet,pour l'utilisation locale, et la correction : j'ai mis comme Mot de Passe au 3 comptes . libre a vous de creez votre compte user et de créez
-des comptes Employés avec le compte Admin.
-
-Azerty123!
+Dans le cadre de ce projet,pour l'utilisation locale, et la correction : j'ai mis les mot de passes dans la copie a rnedre avec l'evaluation. Libre a vous de creez votre compte
+user et de créez des comptes Employés avec le compte Admin.
 
 ---
 
@@ -263,31 +289,6 @@ Les rôles disponibles :
 - ROLE_ADMIN
 
 Les contrôles d’accès sont réalisés côté backend via `isGranted()`.
-
----
-
-## ✉️ Gestion des emails
-
-Le projet utilise Symfony Mailer.
-
-Installez Mailpit au préalable.
-
-En environnement de développement, les emails sont interceptés par Mailpit.
-
-Lancer Mailpit :
-
-- dans une fenètre PowerShell
-
-```bash
-CD <CheminDAccesDossierMailpit> 
-.\mailpit.exe
-```
-
-Interface web disponible sur :
-
-```
-http://localhost:8025
-```
 
 ---
 
