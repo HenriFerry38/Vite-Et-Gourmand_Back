@@ -10,7 +10,7 @@ INSERT INTO `role` VALUES
 INSERT INTO `user` VALUES
 (1,'admin@email.com','$2y$13$.P/UEBtIB3xeQlFwVNSYgOjlVYLqgQmeQnfvn0HDGdE.Yn6R49Dhm','2026-02-09 18:01:13','2026-02-12 15:25:07','47751fefb32f89d1fbdb56dfe423168ffc8c9c46','José','0612345678','Bordeaux','France','Admin','1 rue des Gourmands',33000,1),
 (2,'employee@email.com','$2y$13$5XFG9NHsMZYa/MptOd347.Pvj/QLx24Wp9crrYo8RP2B4kNJFdVVS','2026-02-13 14:48:53','2026-02-13 14:49:34','2c7f72d5950d136d7d91869d64200ef65a78bf64','Julie','0601020304','Bordeaux','France','Employé','1 rue de l\'Emploi',33000,1),
-(3,'utilisateur@mail.com','$2y$13$lPJWhL2AckNboiNnTnv7hOsXdmZScANHCnqt75Tc4B7cXfgp5mVIa','2026-02-13 14:55:56','2026-02-17 14:00:33','d871e07989799715d112981cedc6ec79bb3bfccf','Jean','0605060708','Bordeaux','France','Visiteur','1 rue de la Visite',33000,1);
+(3,'utilisateur@email.com','$2y$13$lPJWhL2AckNboiNnTnv7hOsXdmZScANHCnqt75Tc4B7cXfgp5mVIa','2026-02-13 14:55:56','2026-02-17 14:00:33','d871e07989799715d112981cedc6ec79bb3bfccf','Jean','0605060708','Bordeaux','France','Visiteur','1 rue de la Visite',33000,1);
 
 
 INSERT INTO `user_role` VALUES
@@ -88,14 +88,6 @@ INSERT INTO `avis` VALUES
 (2,3,4,'Avec mes proches on s\'est régaler avec le Menu de Noël.','refuse','2026-02-18 13:25:57','2026-02-18 16:02:26',28),
 (3,3,5,'Poulet Roti Succulent !','accepte','2026-02-18 13:29:49','2026-02-18 19:23:07',30);
 
-INSERT INTO `doctrine_migration_versions` VALUES
-('DoctrineMigrations\\Version20260202150350','2026-02-02 16:03:59',808),
-('DoctrineMigrations\\Version20260203144107','2026-02-03 15:41:14',144),
-('DoctrineMigrations\\Version20260203151820','2026-02-03 16:18:25',26),
-('DoctrineMigrations\\Version20260211160728','2026-02-11 17:07:44',142),
-('DoctrineMigrations\\Version20260211173911','2026-02-11 18:39:19',105),
-('DoctrineMigrations\\Version20260216145254','2026-02-16 15:53:06',24),
-('DoctrineMigrations\\Version20260218105647','2026-02-18 11:57:03',92);
 
 COMMIT;
 SET FOREIGN_KEY_CHECKS=1;

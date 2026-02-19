@@ -730,7 +730,7 @@ class CommandeController extends AbstractController
             ], Response::HTTP_CONFLICT);
         }
 
-        // 🔒 IMPORTANT: ne pas permettre "annulee" via PATCH statut si tu forces ton endpoint annulation
+       
         if ($newStatut === StatutCommande::ANNULEE) {
             return new JsonResponse([
                 'message' => "Annulation interdite via /statut. Utilisez l'endpoint d'annulation avec mode_contact + motif."
@@ -741,9 +741,15 @@ class CommandeController extends AbstractController
         $commande->setStatut($newStatut);
         $commande->setStatutUpdatedAt(new \DateTimeImmutable());
 
+        $logDir = $this->getParameter('kernel.logs_dir');
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0777, true);
+        }
+        $hookLog = $logDir . '/stats_hook.log';
+
         // LOG: on vérifie qu'on passe bien ici
         file_put_contents(
-            $this->getParameter('kernel.project_dir') . '/var/log/stats_hook.log',
+            $hookLog,
             sprintf(
                 "[%s] cmd=%d old=%s new=%s pretMateriel=%s restitution=%s\n",
                 (new \DateTimeImmutable())->format('c'),
@@ -758,19 +764,11 @@ class CommandeController extends AbstractController
 
         // TEST: appelle StatsWriter SANS try/catch pour voir une vraie erreur
         if ($newStatut === StatutCommande::TERMINEE && $oldStatut !== StatutCommande::TERMINEE) {
-            file_put_contents(
-                $this->getParameter('kernel.project_dir') . '/var/log/stats_hook.log',
-                " -> calling StatsWriter\n",
-                FILE_APPEND
-            );
+            file_put_contents($hookLog, " -> calling StatsWriter\n", FILE_APPEND);
 
             $this->statsWriter->addCommandeToDailyMenuStats($commande);
 
-            file_put_contents(
-                $this->getParameter('kernel.project_dir') . '/var/log/stats_hook.log',
-                " -> StatsWriter OK\n",
-                FILE_APPEND
-            );
+            file_put_contents($hookLog, " -> StatsWriter OK\n", FILE_APPEND);
         }
 
         // ✅ Hook: passage à RETOUR_MATERIEL => date + mail

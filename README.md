@@ -109,9 +109,16 @@ Puis modifier les variables suivantes dans .env.local :
 
 ```env
 DATABASE_URL="mysql://USER:PASSWORD@127.0.0.1:3306/nomdeBDD?serverVersion=8.0.32&charset=utf8mb4"
-MONGODB_URL="mongodb://127.0.0.1:27017"
+
+MAILER_DSN=smtp://localhost:1025 --> Décommentez la ligne en supprimant les ###.
+```
+Ajouter aussi ces variables a la fin du fichier.
+```env
+MONGODB_URI="mongodb://127.0.0.1:27017"
+MONGODB_DB="nomBDDnoSQL"
 ```
 Vous pouvez adapter "nomdeBDD" pour renommer la BDD que vous allez creer.
+Vous pouvez adapter "nomdeBDDnoSQL" pour renommer la BDD MongoDB que vous allez creer.
 Adapter USER et PASSWORD selon votre configuration MySQL.
 
 ---
@@ -141,7 +148,12 @@ Les scripts SQL sont disponibles dans le dossier /sql à la racine du backend.
 Importer le fichier 02_seed.sql depuis un terminal:
 
 ```bash
-mysql -u root -p nomdeBDD < sql/02_seed.sql
+mysql -u root -p nomdeBDD --default-character-set=utf8mb4 < sql\02_seed.sql
+```
+
+(Attention pour terminal PowerShell)
+```bash
+cmd /c "chcp 65001>nul & mysql --default-character-set=utf8mb4 -u root -p nomdeBDD < sql\02_seed.sql"
 ```
 Les données sont fournies via 02_seed.sql contenant des INSERT réels.
 
@@ -188,7 +200,7 @@ Les comptes suivants sont présents dans le seed :
 
 ### 🛠 Employé
 
-- Email : employee@mail.com
+- Email : employee@email.com
 
 - Mot de passe : (hashé – voir base de données)
 
@@ -211,7 +223,8 @@ Les comptes suivants sont présents dans le seed :
 Dans un soucis de sécurité, j'ai volontairement affichés les mots de passe "hashés". Il est nécessaire de garder ces informations secretes.
 Cependant lors de la création d'un utilisateur son mot de passe est enregistré et ensuite hashé avant stockage en BDD.
 
-Dans le cadre de ce projet et pour l'utilisation locale, et la correction : j'ai mis comme Mot de Passe au 3 comptes .
+Dans le cadre de ce projet,pour l'utilisation locale, et la correction : j'ai mis comme Mot de Passe au 3 comptes . libre a vous de creez votre compte user et de créez
+des comptes Employés avec le compte Admin.
 
 Azerty123!
 
