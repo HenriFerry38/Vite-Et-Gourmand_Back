@@ -10,7 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Attribute\Security;
 
 #[Route('/api/employee/commande', name: 'api_employee_commande_')]
-class EmployeeCommandeController extends AbstractController
+class EmployeeController extends AbstractController
 {
     public function __construct(
         private CommandeRepository $commandeRepository,
