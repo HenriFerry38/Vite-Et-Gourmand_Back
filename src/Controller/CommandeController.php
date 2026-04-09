@@ -35,8 +35,7 @@ class CommandeController extends AbstractController
         private SerializerInterface $serializer,
         private UrlGeneratorInterface $urlGenerator,
         private MenuRepository $menuRepository,
-        private MailerInterface $mailer,
-        private StatsWriter $statsWriter
+        private MailerInterface $mailer
         )
     {
 
@@ -673,7 +672,7 @@ class CommandeController extends AbstractController
             ),
         ]
     )]
-    public function patchStatut(int $id, Request $request): JsonResponse
+    public function patchStatut(int $id, Request $request, StatsWriter $statsWriter): JsonResponse
     {
         $commande = $this->repository->find($id);
         if (!$commande) {
@@ -766,7 +765,7 @@ class CommandeController extends AbstractController
         if ($newStatut === StatutCommande::TERMINEE && $oldStatut !== StatutCommande::TERMINEE) {
             file_put_contents($hookLog, " -> calling StatsWriter\n", FILE_APPEND);
 
-            $this->statsWriter->addCommandeToDailyMenuStats($commande);
+            $statsWriter->addCommandeToDailyMenuStats($commande);
 
             file_put_contents($hookLog, " -> StatsWriter OK\n", FILE_APPEND);
         }
