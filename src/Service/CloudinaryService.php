@@ -170,6 +170,7 @@ class CloudinaryService
 
         $this->cloudinary->uploadApi()->destroy($publicId, [
             'resource_type' => 'image',
+            'invalidate' => true,
         ]);
     }
 

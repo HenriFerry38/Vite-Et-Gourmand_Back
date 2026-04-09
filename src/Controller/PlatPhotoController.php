@@ -66,24 +66,28 @@ class PlatPhotoController extends AbstractController
             return new JsonResponse(['message' => 'Format invalide (jpeg/png/webp)'], Response::HTTP_BAD_REQUEST);
         }
 
-        // 1) supprime l'ancienne si existe
-        if ($plat->getPhoto()) {
-            try {
-                $this->cloudinaryService->deleteByUrl($plat->getPhoto());
-            } catch (\Throwable $e) {
-                // on ignore l’échec de suppression de l’ancienne image
-                // pour ne pas bloquer le remplacement par la nouvelle
-            }
-        }
-        // 3) move
+        $oldPhoto = $plat->getPhoto();
+
         $uploaded = $this->cloudinaryService->uploadPlatPhoto($file, $plat->getId());
 
         if (empty($uploaded['secure_url'])) {
-            return new JsonResponse(['message' => 'Échec de l’upload Cloudinary'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(
+                ['message' => 'Échec de l’upload Cloudinary'],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
-        // 4) save bdd
+
         $plat->setPhoto($uploaded['secure_url']);
         $this->em->flush();
+
+        // suppression de l’ancienne image APRES succès du remplacement
+        if ($oldPhoto && $oldPhoto !== $plat->getPhoto()) {
+            try {
+                $this->cloudinaryService->deleteByUrl($oldPhoto);
+            } catch (\Throwable $e) {
+                error_log('Cloudinary delete failed: ' . $e->getMessage());
+            }
+        }
 
         return new JsonResponse([
             'id' => $plat->getId(),
