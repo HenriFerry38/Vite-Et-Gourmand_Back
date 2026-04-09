@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Service\CloudinaryService;
 use App\Repository\PlatRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use OpenApi\Attributes as OA;
@@ -19,7 +20,7 @@ class PlatPhotoController extends AbstractController
     public function __construct(
         private PlatRepository $plats,
         private EntityManagerInterface $em,
-        private string $platsUploadDir,
+        private CloudinaryService $cloudinaryService
     ) {}
 
     #[Route('/{id}/photo', name: 'upload', methods: ['POST'], requirements: ['id' => '\d+'])]
@@ -67,27 +68,23 @@ class PlatPhotoController extends AbstractController
 
         // 1) supprime l'ancienne si existe
         if ($plat->getPhoto()) {
-            $oldPath = rtrim($this->platsUploadDir, '/').'/'.$plat->getPhoto();
-            if (is_file($oldPath)) {
-                @unlink($oldPath);
-            }
+            $this->cloudinaryService->deleteByUrl($plat->getPhoto());
         }
 
-        // 2) génère un nom safe
-        $ext = $file->guessExtension() ?: 'jpg';
-        $filename = sprintf('plat_%d_%s.%s', $plat->getId(), bin2hex(random_bytes(6)), $ext);
-
         // 3) move
-        $file->move($this->platsUploadDir, $filename);
+        $uploaded = $this->cloudinaryService->uploadPlatPhoto($file, $plat->getId());
 
+        if (empty($uploaded['secure_url'])) {
+            return new JsonResponse(['message' => 'Échec de l’upload Cloudinary'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
         // 4) save bdd
-        $plat->setPhoto($filename);
+        $plat->setPhoto($uploaded['secure_url']);
         $this->em->flush();
 
         return new JsonResponse([
             'id' => $plat->getId(),
             'photo' => $plat->getPhoto(),
-            'photo_url' => '/uploads/plats/'.$plat->getPhoto(),
+            'photo_url' => $plat->getPhoto(),
         ], Response::HTTP_OK);
     }
 
