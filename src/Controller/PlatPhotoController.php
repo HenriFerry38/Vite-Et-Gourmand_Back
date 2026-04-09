@@ -68,9 +68,13 @@ class PlatPhotoController extends AbstractController
 
         // 1) supprime l'ancienne si existe
         if ($plat->getPhoto()) {
-            $this->cloudinaryService->deleteByUrl($plat->getPhoto());
+            try {
+                $this->cloudinaryService->deleteByUrl($plat->getPhoto());
+            } catch (\Throwable $e) {
+                // on ignore l’échec de suppression de l’ancienne image
+                // pour ne pas bloquer le remplacement par la nouvelle
+            }
         }
-
         // 3) move
         $uploaded = $this->cloudinaryService->uploadPlatPhoto($file, $plat->getId());
 
