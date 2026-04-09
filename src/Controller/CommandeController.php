@@ -763,11 +763,19 @@ class CommandeController extends AbstractController
 
         // TEST: appelle StatsWriter SANS try/catch pour voir une vraie erreur
         if ($newStatut === StatutCommande::TERMINEE && $oldStatut !== StatutCommande::TERMINEE) {
-            file_put_contents($hookLog, " -> calling StatsWriter\n", FILE_APPEND);
+            file_put_contents($hookLog, "-> calling StatsWriter\n", FILE_APPEND);
 
-            $statsWriter->addCommandeToDailyMenuStats($commande);
+            try {
+                $statsWriter->addCommandeToDailyMenuStats($commande);
 
-            file_put_contents($hookLog, " -> StatsWriter OK\n", FILE_APPEND);
+                file_put_contents($hookLog, "-> StatsWriter OK\n", FILE_APPEND);
+            } catch (\Throwable $e) {
+                file_put_contents(
+                    $hookLog,
+                    "-> StatsWriter ERROR: " . $e->getMessage() . "\n",
+                    FILE_APPEND
+                );
+            }
         }
 
         // ✅ Hook: passage à RETOUR_MATERIEL => date + mail
